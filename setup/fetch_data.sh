@@ -143,6 +143,9 @@ elif get "${IMGT_URL}" "${IMGT_ZIP}" 20000000 "IMGT archive"; then
     unzip -o -q -d "${REF_DIR}" "${IMGT_ZIP}" && rm -f "${IMGT_ZIP}"
 fi
 if have "${IMGT_RAW}" 100000000; then
+    # a fresh clone has no soft/lohhla/data: the directory is created by
+    # whichever step writes into it first, and that is this one
+    mkdir -p "${LOHHLA_DIR}/data"
     LOHHLA_FA="${LOHHLA_DIR}/data/hla_all_lohhla.fasta"
     if have "${LOHHLA_FA}" 1000000; then
         note "LOHHLA reference: already built"
@@ -195,6 +198,7 @@ get "${GENCODE_BASE}/gencode.v46.pc_translations.fa.gz" \
 say "IMGT exon annotation"
 note "LOHHLA reads hla.dat to know where the exons sit; the FASTA alone"
 note "gives it sequence but no structure"
+mkdir -p "${LOHHLA_DIR}/data"
 DAT_OUT="${LOHHLA_DIR}/data/hla.dat"
 DAT_ZIP="${REF_DIR}/hla.dat.zip"
 if have "${DAT_OUT}" 50000000; then
