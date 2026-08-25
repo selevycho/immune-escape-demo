@@ -244,8 +244,16 @@ PYEOF
 
 say "verification"
 
-printf "  %-34s" "no novoalign left"
-grep -q "novoalign\|novoindex" LOHHLAscript.R && echo "FAIL" || echo "ok"
+# the word survives in comments, in the help text for an option that is
+# now ignored, and in the name of a variable that runs bwa index; what
+# matters is that nothing invokes the binary
+printf "  %-34s" "no novoalign invoked"
+if grep -nE "system\(.*novoalign|paste\(NOVODir" LOHHLAscript.R \
+     | grep -qv "^[0-9]*: *#"; then
+    echo "FAIL"
+else
+    echo "ok"
+fi
 
 printf "  %-34s" "no GATK 3 jars left"
 grep -n "\.jar" LOHHLAscript.R | grep -qv "^[0-9]*: *##" && echo "FAIL" || echo "ok"

@@ -77,4 +77,3 @@ dependencies:
       - triton==3.7.1
       - typing-extensions==4.16.0
       - tzdata==2026.3
-prefix: /home/fr/fr_fr/fr_os136/miniconda3/envs/mhc_env
