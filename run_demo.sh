@@ -34,6 +34,8 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${HERE}/config.sh"
+DEMO_ROOT="${HERE}"
+export DEMO_ROOT
 
 LOCAL=0; DRY=0; FROM=1; ONLY=""
 while [ $# -gt 0 ]; do
@@ -99,7 +101,8 @@ if [ "${DRY}" = "1" ]; then
     exit 0
 fi
 
-mkdir -p "${OUT_DIR}"
+LOG_DIR="${OUT_DIR}/logs"
+mkdir -p "${OUT_DIR}" "${LOG_DIR}"
 T_START=$(date +%s)
 
 # ------------------------------------------------------------ submission
@@ -120,8 +123,13 @@ if [ "${LOCAL}" = "0" ] && command -v sbatch >/dev/null; then
         for SID in ${SAMPLES}; do
             DEP=""
             [ -n "${PREV_IDS}" ] && DEP="--dependency=afterok:${PREV_IDS}"
+            # A submitted script cannot find the repository from its
+            # own path, so both roots travel with the job. Logs go beside
+            # the results rather than into whatever directory sbatch
+            # happened to be called from.
             id=$(sbatch --parsable ${DEP} \
-                 --export=ALL,DATA_DIR="${DATA_DIR}" \
+                 --export=ALL,DATA_DIR="${DATA_DIR}",DEMO_ROOT="${DEMO_ROOT}" \
+                 --output="${LOG_DIR}/%x_%j.log" \
                  "${DEMO_ROOT}/steps/${script}" "${SID}" 2>/dev/null)
             [ -n "${id}" ] && IDS="${IDS}${IDS:+:}${id}"
         done
@@ -135,6 +143,18 @@ if [ "${LOCAL}" = "0" ] && command -v sbatch >/dev/null; then
         PREV_IDS="${IDS}"
     done
 
+    # the report is chained after everything, so a run started and left
+    # alone finishes with its own summary rather than an instruction
+    if [ -z "${ONLY}" ]; then
+        rid=$(sbatch --parsable --dependency=afterok:"${PREV_IDS}" \
+              --export=ALL,DATA_DIR="${DATA_DIR}",DEMO_ROOT="${DEMO_ROOT}" \
+              --output="${LOG_DIR}/report_%j.log" \
+              --job-name=demo_report \
+              --partition=cpu-single --time=00:30:00 --mem=8G \
+              --wrap="bash ${DEMO_ROOT}/steps/08_report.sh" 2>/dev/null)
+        [ -n "${rid}" ] && printf "  9  %-22s job %s\n" "report" "${rid}"
+    fi
+
     echo ""
     note "submitted. The stages are chained: each waits for the one"
     note "before it, so nothing runs against a file that is not there."
@@ -142,8 +162,11 @@ if [ "${LOCAL}" = "0" ] && command -v sbatch >/dev/null; then
     note "watch progress with"
     note "  squeue -u \$USER"
     note ""
-    note "when the queue empties"
-    note "  ${DEMO_ROOT}/steps/08_report.sh"
+    note "logs and results in"
+    note "  ${OUT_DIR}"
+    note ""
+    note "the report runs last and writes to"
+    note "  ${LOG_DIR}/report_*.log"
     exit 0
 fi
 
