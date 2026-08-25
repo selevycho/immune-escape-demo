@@ -1,0 +1,208 @@
+--- /home/fr/fr_fr/fr_os136/immune_escape_demo/soft/lohhla/LOHHLAscript.R.orig	2026-08-24 22:24:37.441486000 +0200
++++ /home/fr/fr_fr/fr_os136/immune_escape_demo/soft/lohhla/LOHHLAscript.R	2026-08-24 22:24:40.028815000 +0200
+@@ -14,45 +14,45 @@
+ 
+ library(optparse)
+ option_list = list(
+-  make_option(c("-id", "--patientId"), type="character", default=NULL,   ## this argument is meant to be required
++  make_option(c("--patientId"), type="character", default=NULL,   ## this argument is meant to be required
+               help="patient ID", metavar="character"),
+-  make_option(c("-o", "--outputDir"), type="character", default=NULL, 
++  make_option(c("--outputDir"), type="character", default=NULL, 
+               help="location of output directory", metavar="character"),
+-  make_option(c("-nBAM", "--normalBAMfile"), type="character", default=NULL,    
++  make_option(c("--normalBAMfile"), type="character", default=NULL,    
+               help="normal BAM file\n\t\tcan be FALSE to run without normal sample", metavar="character"),
+-  make_option(c("-tBAM", "--tumorBAMfile"), type="character", default=NULL,    
++  make_option(c("--tumorBAMfile"), type="character", default=NULL,    
+               help="tumor BAM file", metavar="character"),
+-  make_option(c("-hla", "--hlaPath"), type="character", default=NULL, 
++  make_option(c("--hlaPath"), type="character", default=NULL, 
+               help="location to patient HLA calls", metavar="character"),
+-  make_option(c("-hlaLoc", "--HLAfastaLoc"), type="character", default='~/lohhla/data/hla_all.fasta', 
++  make_option(c("--HLAfastaLoc"), type="character", default='~/lohhla/data/hla_all.fasta', 
+               help="location of HLA FASTA [default= %default]", metavar="character"),
+-  make_option(c("-cn", "--CopyNumLoc"), type="character", default="FALSE", 
++  make_option(c("--CopyNumLoc"), type="character", default="FALSE", 
+               help="location to patient purity and ploidy output\n\t\tcan be FALSE to only estimate allelic imbalance", metavar="character"),
+-  make_option(c("-ov", "--overrideDir"), type="character", default='FALSE', 
++  make_option(c("--overrideDir"), type="character", default='FALSE', 
+               help="location of flagstat information if already run [default= %default]", metavar="character"),
+-  make_option(c("-mc", "--minCoverageFilter"), type="numeric", default=30,
++  make_option(c("--minCoverageFilter"), type="numeric", default=30,
+               help="minimum coverage at mismatch site [default= %default]", metavar="character"),
+-  make_option(c("-kmer", "--kmerSize"), type="numeric", default=50, 
++  make_option(c("--kmerSize"), type="numeric", default=50, 
+               help="size of kmers to fish with [default= %default]", metavar="character"),
+-  make_option(c("-mm", "--numMisMatch"), type="numeric", default=1, 
++  make_option(c("--numMisMatch"), type="numeric", default=1, 
+               help="number of mismatches allowed in read to map to HLA allele [default= %default]", metavar="character"),
+-  make_option(c("-ms", "--mappingStep"), type="logical", default=TRUE, 
++  make_option(c("--mappingStep"), type="logical", default=TRUE, 
+               help="does mapping to HLA alleles need to be done [default= %default]", metavar="character"),
+-  make_option(c("-fs", "--fishingStep"), type="logical", default=TRUE, 
++  make_option(c("--fishingStep"), type="logical", default=TRUE, 
+               help="if mapping is performed, also look for fished reads matching kmers of size kmerSize [default= %default]", metavar="character"),
+-  make_option(c("-ps", "--plottingStep"), type="logical", default=TRUE, 
++  make_option(c("--plottingStep"), type="logical", default=TRUE, 
+               help="are plots made [default= %default]", metavar="character"),
+-  make_option(c("-cs", "--coverageStep"), type="logical", default=TRUE, 
++  make_option(c("--coverageStep"), type="logical", default=TRUE, 
+             help="are coverage differences analyzed [default= %default]", metavar="character"),
+-  make_option(c("-cu", "--cleanUp"), type="logical", default=TRUE,            
++  make_option(c("--cleanUp"), type="logical", default=TRUE,            
+               help="remove temporary files [default= %default]", metavar="character"),
+-  make_option(c("-no", "--novoDir"), type="character", default='', 
++  make_option(c("--novoDir"), type="character", default='', 
+               help="path to novoalign executable [default= %default]", metavar="character"),
+-  make_option(c("-ga", "--gatkDir"), type="character", default='', 
++  make_option(c("--gatkDir"), type="character", default='', 
+               help="path to GATK executable [default= %default]", metavar="character"),
+-  make_option(c("-ex", "--HLAexonLoc"), type="character", default='~/lohhla/data/hla.dat', 
++  make_option(c("--HLAexonLoc"), type="character", default='~/lohhla/data/hla.dat', 
+               help="HLA exon boundaries for plotting [default= %default]", metavar="character"),
+-  make_option(c("-w", "--ignoreWarnings"), type="logical", default=TRUE, 
++  make_option(c("--ignoreWarnings"), type="logical", default=TRUE, 
+               help="continue running with warnings [default= %default]", metavar="character")
+ )
+ 
+@@ -252,7 +252,7 @@
+ ##   system(cmd)
+ ## 
+ ##   # convert to fastq
+-##   cmd <- paste('java -jar ', GATKDir, '/SamToFastq.jar I=', regionDir, '/fished.sam F=', regionDir, '/fished.1.fastq F2=', regionDir, '/fished.2.fastq VALIDATION_STRINGENCY=SILENT', sep = '')
++##   cmd <- paste('samtools fastq -1 ', regionDir, '/fished.1.fastq -2 ', regionDir, '/fished.2.fastq -0 /dev/null -s /dev/null -n ', regionDir, '/fished.sam', sep = '')
+ ##   system(cmd)
+ ## 
+ ## }
+@@ -272,7 +272,7 @@
+   system(cmd)
+ 
+   # convert to fastq
+-  cmd <- paste('java -jar ', GATKDir, '/SamToFastq.jar I=', regionDir, '/fished.sam F=', regionDir, '/fished.1.fastq F2=', regionDir, '/fished.2.fastq VALIDATION_STRINGENCY=SILENT', sep = '')
++  cmd <- paste('samtools fastq -1 ', regionDir, '/fished.1.fastq -2 ', regionDir, '/fished.2.fastq -0 /dev/null -s /dev/null -n ', regionDir, '/fished.sam', sep = '')
+   system(cmd)
+ 
+ }
+@@ -662,7 +662,7 @@
+ 
+   # nix file for patient reference fasta -- novoalign
+   write.table(paste('\nnix file for patient reference fasta at ', date(), '\n', sep = ''), file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-  novoindexCMD <- paste('novoindex ', workDir, '/', full.patient, '.patient.hlaFasta.nix', ' ', workDir, '/', full.patient, '.patient.hlaFasta.fa', sep = '')
++  novoindexCMD <- paste('bwa index ', workDir, '/', full.patient, '.patient.hlaFasta.fa', sep = '')
+   write.table(novoindexCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+   system(novoindexCMD)
+ 
+@@ -701,16 +701,16 @@
+     write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(samtoolsCMD)
+     
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6:29909037-29913661 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    samtoolsCMD <- paste("samtools view ", BAMfile, " chr6:29921000-29970000 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+     write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(samtoolsCMD)
+     
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6:31321649-31324964 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    samtoolsCMD <- paste("samtools view ", BAMfile, " chr6:31332000-31388000 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+     write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(samtoolsCMD)
+ 
+     
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6:31236526-31239869 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    samtoolsCMD <- paste("samtools view ", BAMfile, " chr6:31247000-31293000 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+     write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(samtoolsCMD)
+ 
+@@ -724,37 +724,37 @@
+     # write.table(paste(samtoolsCMD, '\n', sep = ''), file = log.name, row.names=FALSE, col.names=FALSE, quote=FALSE, append = TRUE)
+     # system(samtoolsCMD)
+     
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_apd_hap1 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_cox_hap2 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-    
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_dbb_hap3 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-    
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_mann_hap4 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-    
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_mcf_hap5 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-    
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_qbl_hap6 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
+-    
+-    samtoolsCMD <- paste("samtools view ", BAMfile, " 6_ssto_hap7 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
+-    write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    system(samtoolsCMD)
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_apd_hap1 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_cox_hap2 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++    
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_dbb_hap3 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++    
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_mann_hap4 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++    
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_mcf_hap5 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++    
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_qbl_hap6 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
++    
++    ## hg19 haplotype contig, absent in hg38: samtoolsCMD <- paste("samtools view ", BAMfile, " 6_ssto_hap7 >> ",regionDir,"/",BAMid,".chr6region.sam",sep="")
++    ## write.table(samtoolsCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
++    ## system(samtoolsCMD)
+     
+     # turn into fastq -- this step has an error with unpaired mates, but seems to work ok just the same (VALIDATION_STRINGENCY=SILENT)
+     write.table(paste('\nturn into fastq at ', date(), '\n', sep = ''), file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+-    samToFastQ <- paste("java -jar ",GATKDir,"/SamToFastq.jar ","I=",regionDir,"/",BAMid,".chr6region.sam"," F=",regionDir,"/",BAMid,".chr6region.1.fastq"," F2=",regionDir,"/",BAMid,".chr6region.2.fastq"," VALIDATION_STRINGENCY=SILENT",sep="")
++    samToFastQ <- paste("samtools sort -n -o ", regionDir, "/", BAMid, ".chr6region.nsorted.bam ", regionDir, "/", BAMid, ".chr6region.sam && samtools fastq -1 ", regionDir, "/", BAMid, ".chr6region.1.fastq -2 ", regionDir, "/", BAMid, ".chr6region.2.fastq -s ", regionDir, "/", BAMid, ".chr6region.single.fastq -0 /dev/null -n ", regionDir, "/", BAMid, ".chr6region.nsorted.bam", sep="")
+     write.table(samToFastQ, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(samToFastQ)
+ 
+@@ -774,7 +774,7 @@
+     # align to all HLA alleles
+     write.table(paste('\nalign to all HLA alleles at ', date(), '\n', sep = ''), file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)  
+     
+-    alignCMD <- paste(NOVODir, '/novoalign -d ', workDir, '/', full.patient, '.patient.hlaFasta.nix', ' -f ', regionDir,"/",BAMid,".chr6region.1.fastq", ' ', regionDir,"/",BAMid,".chr6region.2.fastq", ' -F STDFQ -R 0 -r All 9999 -o SAM -o FullNW 1> ', regionDir, '/', BAMid, '.chr6region.patient.reference.hlas.sam ', '2> ', regionDir, '/', BAMid, '_BS_GL.chr6region.patient.reference.hlas.metrics', sep = '')
++    alignCMD <- paste('bwa mem -a -t 4 ', workDir, '/', full.patient, '.patient.hlaFasta.fa ', regionDir, "/", BAMid, ".chr6region.1.fastq ", regionDir, "/", BAMid, ".chr6region.2.fastq", ' 1> ', regionDir, '/', BAMid, '.chr6region.patient.reference.hlas.sam ', '2> ', regionDir, '/', BAMid, '_BS_GL.chr6region.patient.reference.hlas.metrics', sep = '')
+     write.table(alignCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(alignCMD)
+ 
+@@ -783,7 +783,7 @@
+     system(convertToBam)
+     
+     # sort
+-    sortBAM <- paste("java -jar ",GATKDir,"/SortSam.jar"," I=",regionDir, '/', BAMid, '.chr6region.patient.reference.hlas.bam'," ","O=",regionDir,"/",BAMid,".chr6region.patient.reference.hlas.csorted.bam", " SORT_ORDER=coordinate",sep="")
++    sortBAM <- paste("samtools sort -o ", regionDir, "/", BAMid, ".chr6region.patient.reference.hlas.csorted.bam ", regionDir, "/", BAMid, ".chr6region.patient.reference.hlas.bam", sep="")
+     write.table(sortBAM, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+     system(sortBAM)
+     
+@@ -823,7 +823,7 @@
+       # and filter out reads that have too many events -- has to be done here because some reads map to multiple alleles
+       passed.reads <- count.events(paste(regionDir, '/', BAMid, '.type.', allele, '.bam', sep = ''), n = numMisMatch)
+       write.table(passed.reads, file = paste(regionDir, '/', BAMid, '.', allele, '.passed.reads.txt', sep = ''), sep = '\t', quote = FALSE, row.names = FALSE, col.names = FALSE)
+-      extractCMD <- paste("java -jar ",GATKDir,"/FilterSamReads.jar ", "I=",  regionDir, '/', BAMid, '.type.', allele, '.bam' , " FILTER=includeReadList READ_LIST_FILE=", regionDir, "/", BAMid, '.', allele, ".passed.reads.txt", ' OUTPUT=', regionDir, '/', BAMid, '.type.', allele, '.filtered.bam', sep = '')
++      extractCMD <- paste("samtools view -b -N ", regionDir, "/", BAMid, '.', allele, ".passed.reads.txt -o ", regionDir, "/", BAMid, ".type.", allele, ".filtered.bam ", regionDir, "/", BAMid, ".type.", allele, ".bam", sep = "")
+       write.table(extractCMD, file = log.name, quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+       system(extractCMD)
+ 

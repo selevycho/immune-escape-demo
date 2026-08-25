@@ -1,0 +1,40 @@
+# Data and outputs live outside the repository.
+#
+# The demo needs about 30 GB of reference data and produces several more,
+# none of which belongs in version control. config.sh points at a
+# directory chosen at setup time; these entries catch the case where
+# someone points it back inside the repository.
+data/
+results/
+reference/
+samples/
+
+# environments are built from setup/environments/*.yml, never committed
+envs/
+*.conda
+
+# IMGT/HLA is CC BY-NoDerivs and is rebuilt locally by setup/fetch_data.sh
+soft/lohhla/data/hla.dat
+soft/lohhla/data/hla_all_lohhla.fasta
+soft/lohhla/data/*.fasta.*
+
+# netMHCpan is licensed per user by DTU and cannot be redistributed
+soft/netMHCpan*/
+
+*.log
+*.bam
+*.bai
+*.vcf.gz
+*.vcf.gz.tbi
+__pycache__/
+.DS_Store
+
+# LOHHLA is not redistributable. Its licence provides it as a personal
+# copy and forbids forwarding it. setup/get_lohhla.sh fetches the original
+# from the authors and applies soft/lohhla/lohhla.patch, which is ours.
+soft/lohhla/LOHHLAscript.R
+soft/lohhla/LOHHLAscript.R.orig
+soft/lohhla/README.md
+soft/lohhla/.git/
+soft/lohhla/.Rapp.history
+soft/lohhla/patches/
