@@ -62,8 +62,18 @@ for SID in ${TARGETS}; do
 
     # BAMSurgeon variant format for substitutions:
     #   chrom  pos  pos  VAF  altbase
-    awk -F'\t' 'NR>1 && $8=="SNP" {print $2"\t"$3"\t"$3"\t"$7"\t"$5}' \
-        "${TRUTH}" > "${OUT}/snvs.txt"
+    #
+    # Columns are located by their header name rather than by position.
+    # The truth file gained two fields when the published package was
+    # rebuilt, everything after them shifted by one, and the scripts that
+    # counted columns quietly started reading the wrong ones — a failure
+    # that looks exactly like an empty truth set.
+    awk -F'\t' '
+        NR==1 { for (i=1; i<=NF; i++) c[$i]=i; next }
+        $c["type"]=="SNP" {
+            print $c["chrom"] "\t" $c["pos"] "\t" $c["pos"] "\t" \
+                  $c["vaf"] "\t" $c["alt"]
+        }' "${TRUTH}" > "${OUT}/snvs.txt"
 
     N_SNV=$(wc -l < "${OUT}/snvs.txt")
     VAF_MED=$(awk '{print $4}' "${OUT}/snvs.txt" | sort -n \

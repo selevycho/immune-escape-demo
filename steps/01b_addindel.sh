@@ -76,21 +76,28 @@ for SID in ${TARGETS}; do
     #   INS: chrom  start  start  VAF  INS  sequence
     # For a deletion the MAF gives the deleted bases as the reference
     # allele, so the end coordinate follows from its length.
+    # Columns by name, not by number — see the note in 01a_addsnv.sh.
     awk -F'\t' -v ms="${MHC_S}" -v me="${MHC_E}" '
-        NR>1 && $8=="DEL" {
-            if ($2=="chr6" && $3>=ms && $3<me) next
-            end = $3 + length($4) - 1
-            if (end <= $3) end = $3 + 1
-            printf "%s\t%s\t%d\t%s\tDEL\n", $2, $3, end, $7
+        NR==1 { for (i=1; i<=NF; i++) c[$i]=i; next }
+        {
+            chrom = $c["chrom"]; pos = $c["pos"]
+            ref = $c["ref"]; alt = $c["alt"]; vaf = $c["vaf"]
+            if (chrom=="chr6" && pos>=ms && pos<me) next
         }
-        NR>1 && $8=="INS" {
-            if ($2=="chr6" && $3>=ms && $3<me) next
-            seq = ($5 == "-" || $5 == "") ? "A" : $5
-            printf "%s\t%s\t%s\t%s\tINS\t%s\n", $2, $3, $3, $7, seq
+        $c["type"]=="DEL" {
+            end = pos + length(ref) - 1
+            if (end <= pos) end = pos + 1
+            printf "%s\t%s\t%d\t%s\tDEL\n", chrom, pos, end, vaf
+        }
+        $c["type"]=="INS" {
+            seq = (alt == "-" || alt == "") ? "A" : alt
+            printf "%s\t%s\t%s\t%s\tINS\t%s\n", chrom, pos, pos, vaf, seq
         }
     ' "${TRUTH}" > "${OUT}/indels.txt"
 
-    N_TOTAL=$(awk -F'\t' 'NR>1 && ($8=="DEL" || $8=="INS")' "${TRUTH}" | wc -l)
+    N_TOTAL=$(awk -F'\t' '
+        NR==1 { for (i=1; i<=NF; i++) c[$i]=i; next }
+        $c["type"]=="DEL" || $c["type"]=="INS"' "${TRUTH}" | wc -l)
     N_IND=$(wc -l < "${OUT}/indels.txt")
     N_MHC=$(( N_TOTAL - N_IND ))
     note "${N_TOTAL} indels in the truth set, ${N_MHC} dropped from the MHC, ${N_IND} to inject"
