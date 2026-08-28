@@ -181,7 +181,12 @@ data, the samples and every result.
 
 ## Data
 
-The five samples come from <https://doi.org/10.5281/zenodo.22086838>:
+All forty pairs, with the analysis that produced the published numbers,
+are at <https://doi.org/10.5281/zenodo.22135219> and
+<https://github.com/selevycho/immune_escape_cohort>.
+
+The five samples used here come from
+<https://doi.org/10.5281/zenodo.22086838>:
 five normal BAM slices and, for each, the mutations to be placed with
 their hg38 coordinates and allele fractions. `fetch_data.sh` downloads
 them. The tumour BAMs are not included — the pipeline builds them, which
